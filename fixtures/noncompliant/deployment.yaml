@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noncompliant-api
+spec:
+  selector:
+    matchLabels:
+      app: noncompliant-api
+  template:
+    metadata:
+      labels:
+        app: noncompliant-api
+    spec:
+      containers:
+        - name: api
+          image: nginx:latest
+          securityContext:
+            privileged: true
+            runAsNonRoot: false
+            allowPrivilegeEscalation: true
+          resources: {}

@@ -1,0 +1,50 @@
+name: policy-gates
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Checkov
+        run: pip install checkov==3.2.461
+      - name: Install Conftest
+        run: |
+          curl -fsSLo conftest.tar.gz https://github.com/open-policy-agent/conftest/releases/download/v0.61.2/conftest_0.61.2_Linux_x86_64.tar.gz
+          tar -xzf conftest.tar.gz conftest
+          sudo install conftest /usr/local/bin/conftest
+      - name: Checkov compliant fixture
+        run: checkov -d fixtures/compliant --external-checks-dir checkov/custom --check CUSTOM_AZURE_001 --quiet
+      - name: Checkov catches noncompliance
+        run: '! checkov -d fixtures/noncompliant --external-checks-dir checkov/custom --check CUSTOM_AZURE_001 --quiet'
+      - name: Conftest policy unit tests and fixture gate
+        run: |
+          conftest verify --policy policy/kubernetes
+          conftest test fixtures/compliant/deployment.yaml --policy policy/kubernetes
+          ! conftest test fixtures/noncompliant/deployment.yaml --policy policy/kubernetes
+      - name: Trivy compliant fixture
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: config
+          scan-ref: fixtures/compliant
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Trivy catches noncompliance
+        id: trivy-negative
+        uses: aquasecurity/trivy-action@0.33.1
+        continue-on-error: true
+        with:
+          scan-type: config
+          scan-ref: fixtures/noncompliant
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Assert Trivy rejected fixture
+        if: steps.trivy-negative.outcome != 'failure'
+        run: exit 1

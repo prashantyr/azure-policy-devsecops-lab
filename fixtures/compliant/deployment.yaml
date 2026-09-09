@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliant-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compliant-api
+  template:
+    metadata:
+      labels:
+        app: compliant-api
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: mcr.microsoft.com/oss/nginx/nginx:1.25.5
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
