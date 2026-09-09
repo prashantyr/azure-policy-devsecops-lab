@@ -21,6 +21,11 @@ resource "azurerm_storage_account" "compliant_example" {
   min_tls_version               = "TLS1_2"
   public_network_access_enabled = false
 
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   blob_properties {
     versioning_enabled = true
     delete_retention_policy {
