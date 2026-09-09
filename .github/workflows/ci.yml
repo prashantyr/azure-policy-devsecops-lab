@@ -30,7 +30,7 @@ jobs:
           conftest test fixtures/compliant/deployment.yaml --policy policy/kubernetes
           ! conftest test fixtures/noncompliant/deployment.yaml --policy policy/kubernetes
       - name: Trivy compliant fixture
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: fixtures/compliant
@@ -38,7 +38,7 @@ jobs:
           exit-code: "1"
       - name: Trivy catches noncompliance
         id: trivy-negative
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         continue-on-error: true
         with:
           scan-type: config
